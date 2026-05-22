@@ -27,7 +27,7 @@ connectDB();
 const app = express();
 
 app.use(cors({
-  origin: "edu-connect-school-cgjpav0t2-mayank-singhs-projects-768e3583.vercel.app",
+  origin: "https://edu-connect-school-cgjpav0t2-mayank-singhs-projects-768e3583.vercel.app",
   credentials: true
 }));
 

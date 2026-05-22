@@ -26,7 +26,11 @@ connectDB();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: "edu-connect-school-cgjpav0t2-mayank-singhs-projects-768e3583.vercel.app",
+  credentials: true
+}));
+
 app.use(express.json());
 
 app.use("/uploads", express.static( path.join(__dirname, "uploads") ));

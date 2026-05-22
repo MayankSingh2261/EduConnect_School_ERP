@@ -16,7 +16,7 @@ export default function StudentAttendance() {
       setLoading(true);
 
       const res = await API.get(
-        "/student/dashboard"
+        "/parent/dashboard"
       );
 
       setAttendance(

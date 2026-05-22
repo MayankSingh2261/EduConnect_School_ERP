@@ -19,7 +19,7 @@ export default function StudentMarks() {
       setLoading(true);
 
       const res = await API.get(
-        "/student/dashboard"
+        "/parent/dashboard"
       );
 
       setMarks(

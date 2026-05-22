@@ -1,4 +1,5 @@
 const Fee = require("../models/Fee");
+const createAuditLog = require("../utils/auditLogger");
 
 // ADD FEE
 const addFee = async (req, res) => {
@@ -21,6 +22,19 @@ const addFee = async (req, res) => {
       ...req.body,
       status,
     });
+    await createAuditLog({
+    req,
+    action: "CREATE_FEE_RECORD",
+    module: "Fees",
+    recordId: fee._id.toString(),
+    details: {
+    student: fee.student,
+    feeType: fee.feeType,
+    totalAmount: fee.totalAmount,
+    paidAmount: fee.paidAmount,
+    status: fee.status,
+    },
+  });
 
     res.status(201).json({
       success: true,

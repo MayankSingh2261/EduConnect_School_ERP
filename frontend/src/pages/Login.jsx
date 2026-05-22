@@ -23,7 +23,12 @@ export default function Login() {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-       if (
+      if (res.data.user.mustChangePassword) {
+        navigate("/change-password");
+        return;
+      } 
+
+      else if (
       res.data.user.role === "parent"
     ) {
 
@@ -39,9 +44,10 @@ export default function Login() {
           res.data.user.role === "student"
       ) {
 
-      navigate("/student");
+      navigate("/parent");
 
-      }else {
+      }
+      else {
 
       navigate("/");
 }
@@ -75,6 +81,13 @@ export default function Login() {
 
         <button className="w-full bg-blue-900 text-white py-3 rounded-lg">
           Login
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate("/forgot-password")}
+          className="mt-4 w-full text-sm font-semibold text-blue-700 hover:underline"
+        >
+          Forgot Password?
         </button>
       </form>
     </div>

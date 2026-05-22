@@ -34,10 +34,30 @@ const studentSchema = new mongoose.Schema(
       required: true,
     },
 
+    parentEmail: {
+      type: String,
+      required: true,
+    },
+
     address: {
       type: String,
       default: "",
     },
+
+    guardianLoginId: {
+      type: String,
+      default: "",
+    },
+
+    temporaryPassword: {
+      type: String,
+      default: "",
+    },
+
+    mustChangePassword: {
+      type: Boolean,
+      default: true,
+    },    
 
     // LINKED PARENT ACCOUNT
     parentUser: {

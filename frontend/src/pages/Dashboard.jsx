@@ -1,239 +1,273 @@
 import { useEffect, useState } from "react";
-
 import API from "../services/api";
-
+import StatsCard from "../components/StatsCard";
 import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+  Users,
+  UserRound,
+  CalendarCheck,
+  Bell,
+  TrendingUp,
+} from "lucide-react";
 
 export default function Dashboard() {
-
   const [stats, setStats] = useState({
-    totalStudents: 0,
-    presentToday: 0,
-    absentToday: 0,
-    totalCollection: 0,
-    totalPending: 0,
-    paidFees: 0,
-    partialFees: 0,
-    pendingFees: 0, 
+    students: 0,
+    teachers: 0,
+    attendance: 0,
+    notices: 0,
   });
 
-  const fetchStats = async () => {
+  const [loading, setLoading] = useState(false);
+
+  const fetchDashboard = async () => {
     try {
+      setLoading(true);
 
-      const res = await API.get(
-        "/dashboard/stats"
-      );
+      const [
+        studentsRes,
+        teachersRes,
+        attendanceRes,
+        noticesRes,
+      ] = await Promise.all([
+        API.get("/students"),
+        API.get("/teachers"),
+        API.get("/attendance/report/all"),
+        API.get("/notifications"),
+      ]);
 
-      setStats(res.data);
-
+      setStats({
+        students: studentsRes.data.students?.length || 0,
+        teachers: teachersRes.data.teachers?.length || 0,
+        attendance: attendanceRes.data.reports?.length || 0,
+        notices: noticesRes.data.notifications?.length || 0,
+      });     
     } catch (error) {
-
       console.log(error);
-
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStats();
+    fetchDashboard();
   }, []);
 
-  const chartData = [
+  const cards = [
     {
-      name: "Present",
-      value: stats.presentToday,
+      title: "Total Students",
+      value: stats.students,
+      icon: Users,
+      gradient:
+        "from-blue-600 to-indigo-600",
     },
-    {
-      name: "Absent",
-      value: stats.absentToday,
-    },
-  ];
 
-  const COLORS = [
-    "#16a34a",
-    "#dc2626",
+    {
+      title: "Teachers",
+      value: stats.teachers,
+      icon: UserRound,
+      gradient:
+        "from-violet-600 to-purple-600",
+    },
+
+    {
+      title: "Attendance Records",
+      value: stats.attendance,
+      icon: CalendarCheck,
+      gradient:
+        "from-emerald-600 to-green-600",
+    },
+
+    {
+      title: "Notifications",
+      value: stats.notices,
+      icon: Bell,
+      gradient:
+        "from-orange-500 to-red-500",
+    },
   ];
 
   return (
-    <div>
+    <div className="space-y-8">
 
-      {/* HEADER */}
-      <div className="mb-8">
+      {/* HERO */}
+      <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-r from-slate-950 via-slate-900 to-slate-800 p-8 text-white shadow-xl">
 
-        <h1 className="text-3xl font-bold">
-          Admin Dashboard
-        </h1>
+        <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" />
 
-        <p className="text-gray-500 mt-1">
-          School analytics overview
-        </p>
+        <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-violet-500/20 blur-3xl" />
 
-      </div>
+        <div className="relative z-10">
 
-      {/* CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+          <div className="flex flex-wrap items-center justify-between gap-6">
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border">
+            <div>
 
-          <p className="text-gray-500">
-            Total Students
-          </p>
+              <p className="text-slate-400 text-sm uppercase tracking-[0.2em]">
+                EduConnect ERP
+              </p>
 
-          <h2 className="text-4xl font-bold mt-3">
-            {stats.totalStudents}
-          </h2>
+              <h1 className="mt-3 text-4xl font-bold tracking-tight">
+                Admin Dashboard
+              </h1>
 
-        </div>
+              <p className="mt-4 max-w-2xl text-slate-300 leading-relaxed">
+                Manage students, teachers,
+                attendance, academic records,
+                and institutional communication
+                from one centralized platform.
+              </p>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border">
+            </div>
 
-          <p className="text-gray-500">
-            Present Today
-          </p>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
 
-          <h2 className="text-4xl font-bold text-green-600 mt-3">
-            {stats.presentToday}
-          </h2>
+              <div className="flex items-center gap-3">
 
-        </div>
+                <div className="rounded-2xl bg-emerald-500/20 p-3">
+                  <TrendingUp
+                    className="text-emerald-400"
+                    size={28}
+                  />
+                </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border">
+                <div>
 
-          <p className="text-gray-500">
-            Absent Today
-          </p>
+                  <p className="text-slate-400 text-sm">
+                    System Status
+                  </p>
 
-          <h2 className="text-4xl font-bold text-red-600 mt-3">
-            {stats.absentToday}
-          </h2>
+                  <h3 className="text-xl font-bold text-emerald-400">
+                    Operational
+                  </h3>
 
-        </div>
+                </div>
 
-      </div>
+              </div>
 
-      {/* FEES ANALYTICS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-  <div className="bg-white p-6 rounded-2xl border shadow-sm">
-    <p className="text-gray-500">Fee Collection</p>
-    <h2 className="text-3xl font-bold text-green-600 mt-3">
-      ₹{stats.totalCollection.toLocaleString()}
-    </h2>
-  </div>
-
-  <div className="bg-white p-6 rounded-2xl border shadow-sm">
-    <p className="text-gray-500">Pending Fees</p>
-    <h2 className="text-3xl font-bold text-red-600 mt-3">
-      ₹{stats.totalPending.toLocaleString()}
-    </h2>
-  </div>
-
-  <div className="bg-white p-6 rounded-2xl border shadow-sm">
-    <p className="text-gray-500">Fee Records</p>
-    <h2 className="text-1xl font-bold mt-3">
-      {stats.paidFees} Paid / {stats.partialFees} Partial / {stats.pendingFees} Pending
-    </h2>
-  </div>
-</div>
-
-      {/* ANALYTICS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* PIE CHART */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border">
-
-          <h2 className="text-xl font-semibold mb-6">
-            Attendance Analytics
-          </h2>
-
-          <div className="w-full h-[350px] min-h-[350px]">
-
-                <ResponsiveContainer width="100%" height={350}>
-
-              <PieChart>
-
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={120}
-                  dataKey="value"
-                  label
-                >
-
-                  {chartData.map((entry, index) => (
-                    <Cell
-                      key={index}
-                      fill={COLORS[index]}
-                    />
-                  ))}
-
-                </Pie>
-
-                <Tooltip />
-
-              </PieChart>
-
-            </ResponsiveContainer>
+            </div>
 
           </div>
 
         </div>
 
-        {/* QUICK INSIGHTS */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border">
+      </div>
 
-          <h2 className="text-xl font-semibold mb-6">
-            Quick Insights
+      {/* KPI CARDS */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+
+        {cards.map((card) => (
+
+      <StatsCard
+          key={card.title}
+          title={card.title}
+          value={
+            loading
+              ? "..."
+              : card.value
+          }
+          icon={card.icon}
+          gradient={card.gradient}
+        />
+
+      ))}
+
+      </div>
+
+      {/* QUICK PANELS */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+
+        {/* RECENT ACTIVITY */}
+        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm xl:col-span-2">
+
+          <div className="flex items-center justify-between">
+
+            <div>
+
+              <h2 className="text-2xl font-bold text-slate-900">
+                Recent Activity
+              </h2>
+
+              <p className="mt-1 text-slate-500">
+                Latest academic operations
+              </p>
+
+            </div>
+
+          </div>
+
+          <div className="mt-8 space-y-4">
+
+            {[
+              "Teacher uploaded marks for Class 10-A",
+              "Attendance submitted successfully",
+              "New student registered",
+              "Notice sent to Class 9-B",
+            ].map((item, index) => (
+
+              <div
+                key={index}
+                className="flex items-center gap-4 rounded-2xl border border-slate-100 p-4 transition hover:bg-slate-50"
+              >
+
+                <div className="h-3 w-3 rounded-full bg-emerald-500" />
+
+                <p className="font-medium text-slate-700">
+                  {item}
+                </p>
+
+              </div>
+
+            ))}
+
+          </div>
+
+        </div>
+
+        {/* SYSTEM INFO */}
+        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+
+          <h2 className="text-2xl font-bold text-slate-900">
+            System Insights
           </h2>
 
-          <div className="space-y-4">
+          <p className="mt-1 text-slate-500">
+            Academic platform overview
+          </p>
 
-            <div className="bg-gray-50 p-4 rounded-xl">
+          <div className="mt-8 space-y-5">
 
-              <p className="text-gray-500">
-                Attendance Rate
+            <div className="rounded-2xl bg-slate-50 p-5">
+
+              <p className="text-sm text-slate-500">
+                Active Modules
               </p>
 
-              <h3 className="text-2xl font-bold mt-2">
-
-                {stats.totalStudents > 0
-                  ? (
-                      (stats.presentToday /
-                        stats.totalStudents) *
-                      100
-                    ).toFixed(1)
-                  : 0}
-                %
-
+              <h3 className="mt-2 text-3xl font-bold text-slate-900">
+                12+
               </h3>
 
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-xl">
+            <div className="rounded-2xl bg-slate-50 p-5">
 
-              <p className="text-gray-500">
-                Absent Students
+              <p className="text-sm text-slate-500">
+                User Roles
               </p>
 
-              <h3 className="text-2xl font-bold mt-2 text-red-600">
-                {stats.absentToday}
+              <h3 className="mt-2 text-3xl font-bold text-slate-900">
+                4
               </h3>
 
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-xl">
+            <div className="rounded-2xl bg-slate-50 p-5">
 
-              <p className="text-gray-500">
-                Active Students
+              <p className="text-sm text-slate-500">
+                ERP Status
               </p>
 
-              <h3 className="text-2xl font-bold mt-2 text-green-600">
-                {stats.presentToday}
+              <h3 className="mt-2 text-2xl font-bold text-emerald-600">
+                Stable
               </h3>
 
             </div>

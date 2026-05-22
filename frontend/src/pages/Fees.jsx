@@ -1,5 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import API from "../services/api";
+import PageHeader from "../components/PageHeader";
+import StatsCard from "../components/StatsCard";
+import DataTable from "../components/DataTable";
+
+import {
+  FileText,
+  IndianRupee,
+  AlertCircle,
+} from "lucide-react";
 
 const initialForm = {
   student: "",
@@ -17,6 +26,8 @@ export default function Fees() {
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState(initialForm);
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   // FETCH STUDENTS
   const fetchStudents = async () => {
@@ -86,54 +97,113 @@ export default function Fees() {
     0
   );
 
+  const filteredFees = useMemo(() => {
+  const keyword = search.toLowerCase();
+
+  return fees.filter((item) => {
+    return (
+      item.student?.name?.toLowerCase().includes(keyword) ||
+      item.student?.rollNo?.toLowerCase().includes(keyword) ||
+      item.feeType?.toLowerCase().includes(keyword) ||
+      item.status?.toLowerCase().includes(keyword)
+    );
+  });
+}, [fees, search]);
+
+const columns = [
+  {
+    key: "student",
+    label: "Student",
+    render: (row) => (
+      <div>
+        <p className="font-semibold text-slate-900">
+          {row.student?.name}
+        </p>
+        <p className="text-xs text-slate-500">
+          Roll {row.student?.rollNo}
+        </p>
+      </div>
+    ),
+  },
+  {
+    key: "feeType",
+    label: "Fee Type",
+  },
+  {
+    key: "totalAmount",
+    label: "Total",
+    render: (row) => `₹${row.totalAmount}`,
+  },
+  {
+    key: "paidAmount",
+    label: "Paid",
+    render: (row) => (
+      <span className="font-semibold text-emerald-600">
+        ₹{row.paidAmount}
+      </span>
+    ),
+  },
+  {
+    key: "balance",
+    label: "Balance",
+    render: (row) => (
+      <span className="font-semibold text-red-600">
+        ₹{row.totalAmount - row.paidAmount}
+      </span>
+    ),
+  },
+  {
+    key: "status",
+    label: "Status",
+    render: (row) => (
+      <span
+        className={`rounded-full px-3 py-1 text-sm font-semibold ${
+          row.status === "Paid"
+            ? "bg-green-100 text-green-700"
+            : row.status === "Partial"
+            ? "bg-yellow-100 text-yellow-700"
+            : "bg-red-100 text-red-700"
+        }`}
+      >
+        {row.status}
+      </span>
+    ),
+  },
+];
+
   return (
     <div className="space-y-8">
 
       {/* HEADER */}
-      <div className="bg-gradient-to-r from-emerald-700 to-emerald-500 text-white rounded-3xl p-8 shadow-sm">
-        <h1 className="text-3xl font-bold">
-          Fee Management
-        </h1>
-
-        <p className="text-emerald-100 mt-2">
-          Manage fee collection and payment tracking.
-        </p>
-      </div>
+      <PageHeader
+          title="Fee Management"
+          subtitle="Manage fee collection, pending dues, and payment records."
+          gradient="from-emerald-700 to-green-600"
+      />
 
       {/* STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+  <StatsCard
+    title="Total Records"
+    value={fees.length}
+    icon={FileText}
+    gradient="from-blue-600 to-indigo-600"
+  />
 
-        <div className="bg-white p-6 rounded-3xl border shadow-sm">
-          <p className="text-gray-500">
-            Total Records
-          </p>
+  <StatsCard
+    title="Total Collection"
+    value={`₹${totalCollection.toLocaleString()}`}
+    icon={IndianRupee}
+    gradient="from-emerald-600 to-green-600"
+  />
 
-          <h2 className="text-3xl font-bold mt-3">
-            {fees.length}
-          </h2>
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl border shadow-sm">
-          <p className="text-gray-500">
-            Total Collection
-          </p>
-
-          <h2 className="text-3xl font-bold text-green-600 mt-3">
-            ₹{totalCollection.toLocaleString()}
-          </h2>
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl border shadow-sm">
-          <p className="text-gray-500">
-            Pending Amount
-          </p>
-
-          <h2 className="text-3xl font-bold text-red-600 mt-3">
-            ₹{totalPending.toLocaleString()}
-          </h2>
-        </div>
-
-      </div>
+  <StatsCard
+    title="Pending Amount"
+    value={`₹${totalPending.toLocaleString()}`}
+    icon={AlertCircle}
+    gradient="from-red-500 to-orange-500"
+  />
+</div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
@@ -231,150 +301,19 @@ export default function Fees() {
         </form>
 
         {/* TABLE */}
-        <div className="xl:col-span-2 bg-white rounded-3xl border shadow-sm overflow-hidden">
-
-          <div className="p-6 border-b">
-
-            <h2 className="text-xl font-semibold">
-              Fee Records
-            </h2>
-
-            <p className="text-gray-500 text-sm mt-1">
-              Complete student fee tracking system
-            </p>
-
-          </div>
-
-          <div className="overflow-x-auto">
-
-            <table className="w-full min-w-[900px]">
-
-              <thead className="bg-gray-50 text-gray-600 text-sm">
-
-                <tr>
-
-                  <th className="px-6 py-4 text-left">
-                    Student
-                  </th>
-
-                  <th className="px-6 py-4 text-left">
-                    Fee Type
-                  </th>
-
-                  <th className="px-6 py-4 text-left">
-                    Total
-                  </th>
-
-                  <th className="px-6 py-4 text-left">
-                    Paid
-                  </th>
-
-                  <th className="px-6 py-4 text-left">
-                    Balance
-                  </th>
-
-                  <th className="px-6 py-4 text-left">
-                    Status
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody className="divide-y">
-
-                {loading ? (
-
-                  <tr>
-                    <td
-                      colSpan="6"
-                      className="px-6 py-10 text-center"
-                    >
-                      Loading...
-                    </td>
-                  </tr>
-
-                ) : fees.length === 0 ? (
-
-                  <tr>
-                    <td
-                      colSpan="6"
-                      className="px-6 py-10 text-center"
-                    >
-                      No Fee Records
-                    </td>
-                  </tr>
-
-                ) : (
-
-                  fees.map((item) => {
-
-                    const balance =
-                      item.totalAmount -
-                      item.paidAmount;
-
-                    return (
-                      <tr
-                        key={item._id}
-                        className="hover:bg-gray-50"
-                      >
-
-                        <td className="px-6 py-4">
-
-                          <div className="font-semibold">
-                            {item.student?.name}
-                          </div>
-
-                          <div className="text-sm text-gray-500">
-                            Roll {item.student?.rollNo}
-                          </div>
-
-                        </td>
-
-                        <td className="px-6 py-4">
-                          {item.feeType}
-                        </td>
-
-                        <td className="px-6 py-4 font-medium">
-                          ₹{item.totalAmount}
-                        </td>
-
-                        <td className="px-6 py-4 text-green-600 font-medium">
-                          ₹{item.paidAmount}
-                        </td>
-
-                        <td className="px-6 py-4 text-red-600 font-medium">
-                          ₹{balance}
-                        </td>
-
-                        <td className="px-6 py-4">
-
-                          <span
-                            className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                              item.status === "Paid"
-                                ? "bg-green-100 text-green-700"
-                                : item.status === "Partial"
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-red-100 text-red-700"
-                            }`}
-                          >
-                            {item.status}
-                          </span>
-
-                        </td>
-
-                      </tr>
-                    );
-                  })
-
-                )}
-
-              </tbody>
-
-            </table>
-
-          </div>
-
+        <div className="xl:col-span-2">
+        <DataTable
+            title="Fee Records"
+            subtitle="Search, review, and track all student fee records."
+            columns={columns}
+            data={filteredFees}
+            search={search}
+            setSearch={setSearch}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            loading={loading}
+            emptyMessage="No fee records found"
+          />
         </div>
 
       </div>

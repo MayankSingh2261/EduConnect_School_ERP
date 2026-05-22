@@ -7,66 +7,70 @@ const Teacher = require("../models/Teacher");
 
 const markAttendance = async (req, res) => {
   try {
-
     const { records, date } = req.body;
 
     if (!records || !date) {
       return res.status(400).json({
+        success: false,
         message: "Records and date are required",
       });
     }
 
-    const teacher = await Teacher.findOne({
-  userAccount: req.user._id,
-});
+    let teacher = null;
 
-if (!teacher) {
-  return res.status(404).json({
-    success: false,
-    message: "Teacher profile not found",
-  });
-}
+    if (req.user?.role === "teacher") {
+      teacher = await Teacher.findOne({
+        userAccount: req.user._id,
+      });
+
+      if (!teacher) {
+        return res.status(404).json({
+          success: false,
+          message: "Teacher profile not found",
+        });
+      }
+    }
+
+    const attendanceSubject =
+      teacher?.subject || "General";
 
     const savedRecords = [];
 
     for (const item of records) {
-
       const attendance =
         await Attendance.findOneAndUpdate(
           {
             student: item.student,
             date,
+            subject: attendanceSubject,
           },
           {
-              student: item.student,
-              subject: teacher.subject,
-              teacher: teacher._id,
-              date,
-              status: item.status,
-            },         
+            student: item.student,
+            date,
+            subject: attendanceSubject,
+            teacher: teacher?._id || null,
+            status: item.status,
+          },
           {
             upsert: true,
             returnDocument: "after",
+            runValidators: true,
           }
         );
 
       savedRecords.push(attendance);
 
-      // SEND ALERT IF ABSENT
       if (item.status === "Absent") {
-
         const student = await Student.findById(
           item.student
         );
 
         if (student) {
-
           await sendWhatsAppMessage(
             student.parentPhone,
             student.name,
             date
           );
-
         }
       }
     }
@@ -76,18 +80,16 @@ if (!teacher) {
       message: "Attendance marked successfully",
       records: savedRecords,
     });
-
   } catch (error) {
+    console.log("Attendance Save Error:", error);
 
     res.status(500).json({
       success: false,
       message: "Failed to mark attendance",
       error: error.message,
     });
-
   }
 };
-
 const getAttendanceByDate = async (req, res) => {
   try {
     const { date } = req.params;

@@ -48,6 +48,16 @@ const teacherSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
+
+    temporaryPassword: {
+      type: String,
+      default: "",
+    },
+
+    mustChangePassword: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );

@@ -17,7 +17,7 @@ export default function StudentNotices() {
         setLoading(true);
 
         const res = await API.get(
-          "/student/dashboard"
+          "/parent/dashboard"
         );
 
         setNotifications(

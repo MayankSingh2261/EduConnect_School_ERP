@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
+import PageHeader from "../components/PageHeader";
 
 export default function AttendanceReport() {
 
@@ -35,7 +36,11 @@ export default function AttendanceReport() {
 
   return (
     <div>
-
+        <PageHeader
+            title="Attendance Reports"
+            subtitle="Review attendance analytics and academic attendance history."
+            gradient="from-cyan-700 to-blue-600"
+        />
       <div className="mb-6">
 
         <h1 className="text-3xl font-bold">

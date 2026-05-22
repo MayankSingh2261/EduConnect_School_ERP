@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import API from "../services/api";
+import PageHeader from "../components/PageHeader";
+import StatsCard from "../components/StatsCard";
+import DataTable from "../components/DataTable";
+
+import {
+  ClipboardList,
+  GraduationCap,
+  BookOpen,
+  Trophy,
+} from "lucide-react";
 
 const initialForm = {
   student: "",
@@ -95,13 +105,11 @@ export default function TeacherMarks() {
 
   return (
     <div className="space-y-8">
-      <div className="bg-gradient-to-r from-violet-700 to-violet-500 text-white rounded-3xl p-8 shadow-sm">
-        <h1 className="text-3xl font-bold">Upload Marks</h1>
-
-        <p className="text-violet-100 mt-2">
-          Upload academic marks for assigned students.
-        </p>
-      </div>
+      <PageHeader
+        title="Upload Marks"
+        subtitle="Upload academic marks only for your assigned students and subject."
+        gradient="from-violet-700 to-indigo-600"
+      />
 
       <div className="bg-white rounded-3xl border shadow-sm p-6">
         <h2 className="text-xl font-semibold mb-6">

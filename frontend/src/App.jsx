@@ -25,12 +25,14 @@ import TeacherMarksHistory from "./pages/TeacherMarksHistory";
 import TeacherNotices from "./pages/TeacherNotices";
 import TeacherAttendanceHistory from "./pages/TeacherAttendanceHistory";
 import AdminTeachersAnalytics from "./pages/AdminTeachersAnalytics";
-import StudentLayout from "./layouts/StudentLayout";
-import StudentDashboard from "./pages/StudentDashboard";
-import StudentRoute from "./routes/StudentRoute";
-import StudentAttendance from "./pages/StudentAttendance";
-import StudentMarks from "./pages/StudentMarks";
-import StudentNotices from "./pages/StudentNotices";
+import GuardianAttendance from "./pages/GuardianAttendance";
+import GuardianMarks from "./pages/GuardianMarks";
+import GuardianNotices from "./pages/GuardianNotices";
+import ChangePassword from "./pages/ChangePassword";
+import GuardianFees from "./pages/GuardianFees";
+import GuardianReportCards from "./pages/GuardianReportCards";
+import AuditLogs from "./pages/AuditLogs";
+import ForgotPassword from "./pages/ForgotPassword";
 
 export default function App() {
   return (
@@ -38,6 +40,8 @@ export default function App() {
       <Routes>
         {/* Login */}
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/change-password" element={<ChangePassword />} />
 
         {/* Protected Dashboard Routes */}
         <Route
@@ -58,6 +62,7 @@ export default function App() {
           <Route path="notifications" element={<Notifications />}/>
           <Route path="report-cards" element={<ReportCards />} />
           <Route path="teacher-analytics" element={<AdminTeachersAnalytics />}/>
+          <Route path="audit-logs" element={<AuditLogs />} />
         </Route>
 
         {/* Parent Routes */}
@@ -70,35 +75,12 @@ export default function App() {
           }
         >
           <Route index element={<ParentDashboard />} />
+          <Route path="attendance" element={<GuardianAttendance />} />
+          <Route path="marks" element={<GuardianMarks />} />
+          <Route path="notices" element={<GuardianNotices />} />
+          <Route path="fees" element={<GuardianFees />} />
+          <Route path="report-cards" element={<GuardianReportCards />} />
         </Route>
-
-          {/* Student Routes */}
-          <Route
-  path="/student"
-  element={
-    <StudentRoute>
-      <StudentLayout />
-    </StudentRoute>
-  }
->
-  <Route
-  path="attendance"
-  element={<StudentAttendance />}
-/>
-<Route
-  path="marks"
-  element={<StudentMarks />}
-/>
-<Route
-  path="notices"
-  element={<StudentNotices />}
-/>
-  <Route
-    index
-    element={<StudentDashboard />}
-  />
-  
-</Route>
 
         {/* Teacher Routes */}
         <Route

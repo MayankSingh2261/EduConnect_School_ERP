@@ -1,333 +1,568 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import API from "../services/api";
+import DataTable from "../components/DataTable";
+import PageHeader from "../components/PageHeader";
+
+import {
+  UserRound,
+  BookOpen,
+  GraduationCap,
+  Plus,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 
 const initialForm = {
-  teacherId: "",
   name: "",
   email: "",
-  phone: "",
+  password: "",
   subject: "",
-  qualification: "",
-  assignedClasses: "",
+  assignedClasses: [],
 };
 
 export default function Teachers() {
-  const [teachers, setTeachers] = useState([]);
+  const [teachers, setTeachers] =
+    useState([]);
 
-  const [formData, setFormData] = useState(initialForm);
+  const [students, setStudents] =
+    useState([]);
 
-  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] =
+    useState(initialForm);
 
-  const [saving, setSaving] = useState(false);
+  const [search, setSearch] =
+    useState("");
 
-  // FETCH TEACHERS
-  const fetchTeachers = async () => {
+  const [currentPage, setCurrentPage] =
+    useState(1);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [editingId, setEditingId] =
+    useState(null);
+
+  const fetchData = async () => {
     try {
       setLoading(true);
 
-      const res = await API.get("/teachers");
+      const [
+        teachersRes,
+        studentsRes,
+      ] = await Promise.all([
+        API.get("/teachers"),
+        API.get("/students"),
+      ]);
 
-      setTeachers(res.data.teachers || []);
+      setTeachers(
+        teachersRes.data.teachers || []
+      );
 
+      setStudents(
+        studentsRes.data.students || []
+      );
     } catch (error) {
-
-      console.log(error);
-
+      alert(
+        error.response?.data?.message ||
+          "Failed to load data"
+      );
     } finally {
-
       setLoading(false);
-
     }
   };
 
   useEffect(() => {
-    fetchTeachers();
+    fetchData();
   }, []);
 
-  // HANDLE INPUT
+  const classOptions = useMemo(() => {
+    return [
+      ...new Set(
+        students.map(
+          (student) =>
+            `${student.className}-${student.section}`
+        )
+      ),
+    ];
+  }, [students]);
+
+  const filteredTeachers =
+    useMemo(() => {
+      const keyword =
+        search.toLowerCase();
+
+      return teachers.filter(
+        (teacher) =>
+          teacher.name
+            ?.toLowerCase()
+            .includes(keyword) ||
+          teacher.subject
+            ?.toLowerCase()
+            .includes(keyword) ||
+          teacher.email
+            ?.toLowerCase()
+            .includes(keyword)
+      );
+    }, [teachers, search]);
+
   const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    setFormData({
+      ...formData,
+      [e.target.name]:
+        e.target.value,
+    });
   };
 
-  // SUBMIT
-  const handleSubmit = async (e) => {
+  const handleClassChange = (
+    className
+  ) => {
+    const exists =
+      formData.assignedClasses.includes(
+        className
+      );
+
+    if (exists) {
+      setFormData({
+        ...formData,
+        assignedClasses:
+          formData.assignedClasses.filter(
+            (cls) =>
+              cls !== className
+          ),
+      });
+    } else {
+      setFormData({
+        ...formData,
+        assignedClasses: [
+          ...formData.assignedClasses,
+          className,
+        ],
+      });
+    }
+  };
+
+  const resetForm = () => {
+    setFormData(initialForm);
+
+    setEditingId(null);
+  };
+
+  const handleSubmit = async (
+    e
+  ) => {
     e.preventDefault();
 
     try {
       setSaving(true);
 
-      await API.post("/teachers", {
-        ...formData,
-        assignedClasses: formData.assignedClasses
-          .split(",")
-          .map((item) => item.trim()),
-      });
+      if (editingId) {
+        await API.put(
+          `/teachers/${editingId}`,
+          formData
+        );
 
-      setFormData(initialForm);
+        alert(
+          "Teacher updated successfully"
+        );
+      } else {
+        await API.post(
+          "/teachers",
+          formData
+        );
 
-      fetchTeachers();
+        alert(
+          "Teacher created successfully"
+        );
+      }
 
+      resetForm();
+
+      fetchData();
     } catch (error) {
-
       alert(
         error.response?.data?.message ||
-        "Failed to add teacher"
+          "Operation failed"
       );
-
     } finally {
-
       setSaving(false);
-
     }
   };
+
+  const handleEdit = (
+    teacher
+  ) => {
+    setEditingId(teacher._id);
+
+    setFormData({
+      name: teacher.name || "",
+      email: teacher.email || "",
+      password: "",
+      subject:
+        teacher.subject || "",
+      assignedClasses:
+        teacher.assignedClasses ||
+        [],
+    });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  const handleDelete = async (
+    id
+  ) => {
+    const confirmDelete =
+      window.confirm(
+        "Delete this teacher?"
+      );
+
+    if (!confirmDelete) return;
+
+    try {
+      await API.delete(
+        `/teachers/${id}`
+      );
+
+      fetchData();
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Delete failed"
+      );
+    }
+  };
+
+  const columns = [
+    {
+      key: "teacher",
+      label: "Teacher",
+      render: (row) => (
+        <div>
+          <p className="font-semibold text-slate-900">
+            {row.name}
+          </p>
+
+          <p className="text-xs text-slate-500">
+            {row.email}
+          </p>
+        </div>
+      ),
+    },
+
+    {
+      key: "subject",
+      label: "Subject",
+      render: (row) => (
+        <span className="rounded-full bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-700">
+          {row.subject}
+        </span>
+      ),
+    },
+
+    {
+      key: "classes",
+      label: "Assigned Classes",
+      render: (row) => (
+        <div className="flex flex-wrap gap-2">
+          {row.assignedClasses?.map(
+            (cls) => (
+              <span
+                key={cls}
+                className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700"
+              >
+                {cls}
+              </span>
+            )
+          )}
+        </div>
+      ),
+    },
+
+    {
+      key: "actions",
+      label: "Actions",
+      render: (row) => (
+        <div className="flex gap-2">
+
+          <button
+            onClick={() =>
+              handleEdit(row)
+            }
+            className="rounded-xl bg-amber-100 p-2 text-amber-700 hover:bg-amber-200"
+          >
+            <Pencil size={16} />
+          </button>
+
+          <button
+            onClick={() =>
+              handleDelete(row._id)
+            }
+            className="rounded-xl bg-red-100 p-2 text-red-700 hover:bg-red-200"
+          >
+            <Trash2 size={16} />
+          </button>
+
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-8">
 
       {/* HEADER */}
-      <div className="bg-gradient-to-r from-violet-700 to-violet-500 text-white rounded-3xl p-8 shadow-sm">
+      <PageHeader
+          title="Teacher Management"
+          subtitle="Manage faculty, subjects, and class assignments."
+          gradient="from-violet-700 to-indigo-600"
+      />        
 
-        <h1 className="text-3xl font-bold">
-          Teacher Management
-        </h1>
+      {/* KPI */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
 
-        <p className="text-violet-100 mt-2">
-          Manage faculty records and class assignments.
-        </p>
+        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+
+          <UserRound
+            className="text-violet-600"
+            size={28}
+          />
+
+          <p className="mt-4 text-slate-500">
+            Total Teachers
+          </p>
+
+          <h2 className="mt-2 text-4xl font-bold text-slate-900">
+            {teachers.length}
+          </h2>
+
+        </div>
+
+        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+
+          <BookOpen
+            className="text-indigo-600"
+            size={28}
+          />
+
+          <p className="mt-4 text-slate-500">
+            Subjects Covered
+          </p>
+
+          <h2 className="mt-2 text-4xl font-bold text-slate-900">
+
+            {
+              [
+                ...new Set(
+                  teachers.map(
+                    (t) =>
+                      t.subject
+                  )
+                ),
+              ].length
+            }
+
+          </h2>
+
+        </div>
+
+        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+
+          <GraduationCap
+            className="text-blue-600"
+            size={28}
+          />
+
+          <p className="mt-4 text-slate-500">
+            Assigned Classes
+          </p>
+
+          <h2 className="mt-2 text-4xl font-bold text-slate-900">
+
+            {
+              [
+                ...new Set(
+                  teachers.flatMap(
+                    (t) =>
+                      t.assignedClasses ||
+                      []
+                  )
+                ),
+              ].length
+            }
+
+          </h2>
+
+        </div>
 
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      {/* FORM */}
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm"
+      >
 
-        {/* FORM */}
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-3xl border shadow-sm p-6"
-        >
+        <div className="mb-6 flex items-center gap-3">
 
-          <h2 className="text-xl font-semibold mb-6">
-            Add Teacher
-          </h2>
+          <div className="rounded-2xl bg-violet-100 p-3 text-violet-700">
 
-          <div className="space-y-4">
-
-            <input
-              type="text"
-              name="teacherId"
-              placeholder="Teacher ID"
-              value={formData.teacherId}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3"
-              required
-            />
-
-            <input
-              type="text"
-              name="name"
-              placeholder="Teacher Name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3"
-              required
-            />
-
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3"
-              required
-            />
-
-            <input
-              type="text"
-              name="phone"
-              placeholder="Phone"
-              value={formData.phone}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3"
-              required
-            />
-
-            <input
-              type="text"
-              name="subject"
-              placeholder="Subject"
-              value={formData.subject}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3"
-              required
-            />
-
-            <input
-              type="text"
-              name="qualification"
-              placeholder="Qualification"
-              value={formData.qualification}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3"
-            />
-
-            <input
-              type="text"
-              name="assignedClasses"
-              placeholder="Assigned Classes (10-A, 9-B)"
-              value={formData.assignedClasses}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3"
-            />
-
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-xl font-semibold"
-            >
-              {saving
-                ? "Saving..."
-                : "Add Teacher"}
-            </button>
+            <Plus size={20} />
 
           </div>
 
-        </form>
+          <div>
 
-        {/* TABLE */}
-        <div className="xl:col-span-2 bg-white rounded-3xl border shadow-sm overflow-hidden">
+            <h2 className="text-2xl font-bold text-slate-900">
 
-          <div className="p-6 border-b">
+              {editingId
+                ? "Update Teacher"
+                : "Add New Teacher"}
 
-            <h2 className="text-xl font-semibold">
-              Faculty Records
             </h2>
 
-            <p className="text-gray-500 text-sm mt-1">
-              Complete teacher management system
+            <p className="text-slate-500">
+              Manage teacher credentials and assignments.
             </p>
-
-          </div>
-
-          <div className="overflow-x-auto">
-
-            <table className="w-full min-w-[900px]">
-
-              <thead className="bg-gray-50 text-gray-600 text-sm">
-
-                <tr>
-
-                  <th className="px-6 py-4 text-left">
-                    Teacher
-                  </th>
-
-                  <th className="px-6 py-4 text-left">
-                    Subject
-                  </th>
-
-                  <th className="px-6 py-4 text-left">
-                    Qualification
-                  </th>
-
-                  <th className="px-6 py-4 text-left">
-                    Classes
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody className="divide-y">
-
-                {loading ? (
-
-                  <tr>
-                    <td
-                      colSpan="4"
-                      className="px-6 py-10 text-center"
-                    >
-                      Loading...
-                    </td>
-                  </tr>
-
-                ) : teachers.length === 0 ? (
-
-                  <tr>
-                    <td
-                      colSpan="4"
-                      className="px-6 py-10 text-center"
-                    >
-                      No Teachers Found
-                    </td>
-                  </tr>
-
-                ) : (
-
-                  teachers.map((teacher) => (
-
-                    <tr
-                      key={teacher._id}
-                      className="hover:bg-gray-50"
-                    >
-
-                      <td className="px-6 py-4">
-
-                        <div className="font-semibold">
-                          {teacher.name}
-                        </div>
-
-                        <div className="text-sm text-gray-500">
-                          {teacher.email}
-                        </div>
-
-                      </td>
-
-                      <td className="px-6 py-4">
-                        {teacher.subject}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        {teacher.qualification}
-                      </td>
-
-                      <td className="px-6 py-4">
-
-                        <div className="flex flex-wrap gap-2">
-
-                          {teacher.assignedClasses?.map(
-                            (cls, index) => (
-
-                              <span
-                                key={index}
-                                className="bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-sm font-medium"
-                              >
-                                {cls}
-                              </span>
-
-                            )
-                          )}
-
-                        </div>
-
-                      </td>
-
-                    </tr>
-
-                  ))
-
-                )}
-
-              </tbody>
-
-            </table>
 
           </div>
 
         </div>
 
-      </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+
+          <input
+            type="text"
+            name="name"
+            placeholder="Teacher Name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-violet-500 focus:bg-white"
+          />
+
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-violet-500 focus:bg-white"
+          />
+
+          {!editingId && (
+
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-violet-500 focus:bg-white"
+            />
+
+          )}
+
+          <input
+            type="text"
+            name="subject"
+            placeholder="Subject"
+            value={formData.subject}
+            onChange={handleChange}
+            required
+            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-violet-500 focus:bg-white"
+          />
+
+        </div>
+
+        {/* CLASS ASSIGNMENTS */}
+        <div className="mt-6">
+
+          <h3 className="mb-4 text-lg font-semibold text-slate-900">
+            Assign Classes
+          </h3>
+
+          <div className="flex flex-wrap gap-3">
+
+            {classOptions.map(
+              (cls) => (
+                <button
+                  key={cls}
+                  type="button"
+                  onClick={() =>
+                    handleClassChange(
+                      cls
+                    )
+                  }
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    formData.assignedClasses.includes(
+                      cls
+                    )
+                      ? "bg-violet-600 text-white"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  }`}
+                >
+                  {cls}
+                </button>
+              )
+            )}
+
+          </div>
+
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-3">
+
+          <button
+            disabled={saving}
+            className="rounded-2xl bg-violet-700 px-6 py-3 font-semibold text-white hover:bg-violet-800 disabled:bg-slate-400"
+          >
+
+            {saving
+              ? "Saving..."
+              : editingId
+              ? "Update Teacher"
+              : "Add Teacher"}
+
+          </button>
+
+          {editingId && (
+
+            <button
+              type="button"
+              onClick={resetForm}
+              className="rounded-2xl bg-slate-200 px-6 py-3 font-semibold text-slate-700 hover:bg-slate-300"
+            >
+              Cancel
+            </button>
+
+          )}
+
+        </div>
+
+      </form>
+
+      {/* TABLE */}
+      <DataTable
+        title="Faculty Records"
+        subtitle="Search and manage all teacher accounts."
+        columns={columns}
+        data={filteredTeachers}
+        search={search}
+        setSearch={setSearch}
+        currentPage={currentPage}
+        setCurrentPage={
+          setCurrentPage
+        }
+        loading={loading}
+        emptyMessage="No teachers found"
+      />
 
     </div>
   );

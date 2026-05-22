@@ -20,6 +20,7 @@ const teacherDashboardRoutes = require("./routes/teacherDashboardRoutes");
 const teacherNoticeRoutes = require( "./routes/teacherNoticeRoutes");
 const adminTeacherRoutes = require( "./routes/adminTeacherRoutes");
 const studentDashboardRoutes = require("./routes/studentDashboardRoutes");
+const auditRoutes = require("./routes/auditRoutes");
 
 connectDB();
 
@@ -44,6 +45,7 @@ app.use("/api/teacher", teacherDashboardRoutes);
 app.use( "/api/teacher-notices", teacherNoticeRoutes);
 app.use( "/api/admin-teachers", adminTeacherRoutes);
 app.use("/api/student", studentDashboardRoutes);
+app.use("/api/audit-logs", auditRoutes);
 
 app.get("/", (req, res) => {
   res.send("EduConnect Backend Running");

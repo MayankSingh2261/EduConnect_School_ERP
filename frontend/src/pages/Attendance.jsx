@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import API from "../services/api";
+import PageHeader from "../components/PageHeader";
 
 export default function Attendance() {
   const today = new Date().toISOString().split("T")[0];
@@ -32,9 +33,36 @@ export default function Attendance() {
     }
   };
 
+  const fetchSavedAttendance = async () => {
+  if (!date || students.length === 0) return;
+
+  try {
+    const res = await API.get(`/attendance/${date}`);
+
+    const savedMap = {};
+
+    res.data.forEach((record) => {
+      const studentId =
+        record.student?._id || record.student;
+
+      savedMap[studentId] = record.status;
+    });
+
+    setAttendance((prev) => ({
+      ...prev,
+      ...savedMap,
+    }));
+  } catch (error) {
+    console.log("Saved attendance not found");
+  }
+};
+
   useEffect(() => {
     fetchStudents();
   }, []);
+  useEffect(() => {
+  fetchSavedAttendance();
+}, [date, students]);
 
   const handleStatusChange = (studentId, status) => {
     setAttendance((prev) => ({
@@ -79,6 +107,11 @@ export default function Attendance() {
 
   return (
     <div>
+      <PageHeader
+        title="Attendance Management"
+        subtitle="Mark and manage daily student attendance"
+        gradient="from-blue-700 to-indigo-600"
+      />
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold">Attendance Management</h1>

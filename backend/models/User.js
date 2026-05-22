@@ -26,6 +26,16 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "teacher", "parent", "student"],
       default: "admin",
     },
+
+    resetOtp: {
+  type: String,
+  default: "",
+},
+
+resetOtpExpire: {
+  type: Date,
+  default: null,
+},
   },
   { timestamps: true }
 );

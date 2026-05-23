@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const path = require("path");
 
 dotenv.config();
+console.log("MONGO_URI loaded:", process.env.MONGO_URI ? "YES" : "NO");
 
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
@@ -27,7 +28,10 @@ connectDB();
 const app = express();
 
 app.use(cors({
-  origin: "https://edu-connect-school-cgjpav0t2-mayank-singhs-projects-768e3583.vercel.app",
+  origin: [
+    "http://localhost:5173",
+    "https://edu-connect-school-erp.vercel.app/login"
+  ],
   credentials: true
 }));
 
@@ -59,7 +63,7 @@ app.get("/test", (req, res) => {
   res.send("Test route working");
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
   console.log(`Server running on ${PORT}`);
